@@ -9,8 +9,11 @@ export function useAuth() {
   useEffect(() => {
     setUser(pb.authStore.record);
     setReady(true);
-    const unsubscribe = pb.authStore.onChange((token, record) => setUser(record));
-    return () => unsubscribe();
+    if (pb.authStore.isValid) {
+      // odświeża token i rolę (gdyby superuser ją zmienił)
+      pb.collection("users").authRefresh().catch(() => pb.authStore.clear());
+    }
+    return pb.authStore.onChange((_token, record) => setUser(record));
   }, []);
 
   return { user, ready };

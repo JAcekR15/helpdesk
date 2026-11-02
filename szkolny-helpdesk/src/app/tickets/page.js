@@ -1,69 +1,42 @@
 "use client";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { pb } from "@/lib/pocketbase";
-import { useAuth } from "@/lib/useAuth";
-import { Button } from "@/components/ui/button";
+import { AuthGuard } from "@/components/auth-guard";
+import { TicketForm } from "@/components/ticket-form";
 import { Badge } from "@/components/ui/badge";
+import { STATUSES, labelOf } from "@/lib/constants";
 
 export default function TicketsPage() {
-  const router = useRouter();
-  const { user, ready } = useAuth();
+  return <AuthGuard><MyTickets /></AuthGuard>;
+}
+
+function MyTickets() {
   const [tickets, setTickets] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!ready) return;
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-    pb.collection("tickets")
-      .getFullList({ sort: "-created" })
-      .then(setTickets)
-      .finally(() => setLoading(false));
-  }, [ready, user, router]);
-
-  if (!user) return null;
+  const load = useCallback(async () => {
+    setTickets(await pb.collection("tickets").getFullList({ sort: "-created" }));
+  }, []);
+  useEffect(() => { load(); }, [load]);
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold">Moje zgłoszenia</h1>
-        <div className="flex gap-2">
-          <Button asChild><Link href="/tickets/new">Nowe zgłoszenie</Link></Button>
-          <Button
-            variant="outline"
-            onClick={() => { pb.authStore.clear(); router.push("/login"); }}
-          >
-            Wyloguj
-          </Button>
-        </div>
-      </div>
-
-      {loading && <p>Ładowanie...</p>}
-      {!loading && tickets.length === 0 && <p>Nie masz jeszcze zgłoszeń.</p>}
-
-      {tickets.map((t) => (
-        <div key={t.id} className="border rounded-md p-3 space-y-1">
-          <div className="flex items-center justify-between gap-2">
-            <p className="font-medium">{t.title}</p>
-            <Badge>{t.status}</Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {t.room} · {t.category} · priorytet: {t.priority}
-          </p>
-          <p className="text-sm">{t.description}</p>
-          {t.photo && (
-            <img
-              src={pb.files.getURL(t, t.photo, { thumb: "300x300" })}
-              alt="Zdjęcie usterki"
-              className="max-h-40 rounded"
-            />
-          )}
-        </div>
-      ))}
+    <div className="grid gap-8 md:grid-cols-2">
+      <section>
+        <h1 className="mb-4 text-2xl font-semibold">Nowe zgłoszenie</h1>
+        <TicketForm onCreated={load} />
+      </section>
+      <section>
+        <h2 className="mb-4 text-2xl font-semibold">Moje zgłoszenia</h2>
+        <ul className="space-y-2">
+          {tickets.map((t) => (
+            <li key={t.id} className="flex items-center justify-between rounded-md border p-3">
+              <div>
+                <p className="font-medium">{t.title}</p>
+                <p className="text-sm text-muted-foreground">Sala {t.room}</p>
+              </div>
+              <Badge>{labelOf(STATUSES, t.status)}</Badge>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }
