@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import PocketBase from "pocketbase";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,8 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-
-const pb = new PocketBase("https://db.jacekr.tech");
+import { pb } from "@/lib/pocketbase";
 
 const selectClass =
   "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -32,10 +30,18 @@ export default function AddTicket() {
   }, [router]);
 
   async function sendTicket(data) {
-    setSaving(true);
-    try {
-      await pb.collection("tickets").create(data);
-      router.push("/dashboard/dashboardUser");
+  setSaving(true);
+  try {
+    const record = await pb.collection("tickets").create(data);
+
+    await pb.collection("ticket_events").create({
+      ticket: record.id,
+      user: pb.authStore.record.id,
+      from_status: "",
+      to_status: "nowe",
+    });
+
+    router.push("/dashboard/dashboardUser");
     } catch (err) {
       console.log("status:", err.status);
       console.log("response:", JSON.stringify(err.response, null, 2));

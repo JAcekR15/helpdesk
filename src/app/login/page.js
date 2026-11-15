@@ -12,16 +12,19 @@ import {
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import PocketBase from "pocketbase";
-
-const pb = new PocketBase("https://db.jacekr.tech");
+import { pb } from "@/lib/pocketbase";
 
 export default function Home() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(false);
+  }, []);
 
   async function login(email, password) {
     setLoading(true);
