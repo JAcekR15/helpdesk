@@ -18,9 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import PocketBase from "pocketbase";
+import { pb } from "@/lib/pocketbase";
 
-const pb = new PocketBase("https://db.jacekr.tech");
 
 export default function Register() {
   const router = useRouter();

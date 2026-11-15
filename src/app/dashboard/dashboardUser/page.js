@@ -12,8 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-const pb = new PocketBase("https://db.jacekr.tech");
+import { pb } from "@/lib/pocketbase";
 
 const statusStyles = {
   nowe: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
@@ -63,7 +62,7 @@ export default function DashboardUser() {
 
   function logout() {
     pb.authStore.clear();
-    router.push("/");
+    router.push("/login");
   }
 
   function AddTicket() {
